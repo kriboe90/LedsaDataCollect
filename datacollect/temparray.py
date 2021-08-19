@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import codecs
 
@@ -13,6 +12,9 @@ class TempArrayData:
         self.__read_data()
 
     def __read_data(self):
+        """"
+        Read data from TempArray.dat into dataframe
+        """
         self.temparray_df = self.temparray_input_df.copy()
         self.temparray_df.dropna(axis=1, how='all', inplace=True)
         self.temparray_df.set_index([0], inplace=True)
@@ -28,9 +30,15 @@ class TempArrayData:
 
 
     def smooth_data(self, window: int, smooth='ma'):
+        """
+        Reload data into dataframe and smooth by moving average or median
+        """
         self.window = window
         self.smooth = smooth
         self.__read_data()
 
     def set_timeshift(self, timedelta:int):
+        """
+        Set timeshift in secnonds on index of dataframe
+        """
         self.temparray_df.index += timedelta

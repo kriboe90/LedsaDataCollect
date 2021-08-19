@@ -6,13 +6,14 @@ class MirexData:
     def __init__(self, path_mirex: str):
         self.window = 1
         self.smooth = 'ma'
-
         with codecs.open(path_mirex, 'r', encoding='utf-8', errors='ignore') as fdata:
             self.mirex_input_df = pd.read_csv(fdata, skiprows = 19, delimiter='\t')
-
         self.__read_data()
 
     def __read_data(self):
+        """"
+        Read data from MIREX.dat into dataframes and apply correction for log measurement
+        """
         sigma_1 = lambda b : np.log(10**(b/10))
         sigma_2 = lambda b : 5*np.log10(1/b*10)/(np.log10(np.e)*10)
         if self.smooth == 'median':
@@ -29,10 +30,16 @@ class MirexData:
         self.mass_loss_rate = self.total_mass.diff()
 
     def smooth_data(self, window: int, smooth='ma'):
+        """
+        Reload data into dataframe and smooth by moving average or median
+        """
         self.window = window
         self.smooth = smooth
         self.__read_data()
     def set_timeshift(self, timedelta:int):
+        """
+        Set timeshift in secnonds on index of dataframe
+        """
         self.mirex_1.index += timedelta
         self.mirex_2.index += timedelta
         self.mirex_3.index += timedelta
