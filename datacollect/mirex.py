@@ -4,12 +4,13 @@ import codecs
 
 class MirexData:
     def __init__(self, path_mirex: str):
+        self.window = 1
+        self.smooth = 'ma'
 
         with codecs.open(path_mirex, 'r', encoding='utf-8', errors='ignore') as fdata:
             self.mirex_input_df = pd.read_csv(fdata, skiprows = 19, delimiter='\t')
-            self.window = 1
-            self.smooth = 'ma'
-            self.__read_data()
+
+        self.__read_data()
 
     def __read_data(self):
         sigma_1 = lambda b : np.log(10**(b/10))
@@ -23,7 +24,9 @@ class MirexData:
         self.mirex_1 = self.mirex_data_df['MIREX    '].apply(sigma_1) # h = 3.30 m
         self.mirex_2 = self.mirex_data_df['Mirex 2  '].apply(sigma_2) # h = 2.30 m
         self.mirex_3 = self.mirex_data_df['Mirex 3  '].apply(sigma_2) # h = 1.52 m
-        self.mass_loss_rate = self.mirex_data_df['Balance'].diff()
+        self.temperature = self.mirex_data_df['PT1000   ']
+        self.total_mass = self.mirex_data_df['Balance']
+        self.mass_loss_rate = self.total_mass.diff()
 
     def smooth_data(self, window: int, smooth='ma'):
         self.window = window
@@ -34,3 +37,4 @@ class MirexData:
         self.mirex_2.index += timedelta
         self.mirex_3.index += timedelta
 #         self.mass_loss_rate.index += timedelta
+#         self.temperature.index += timedelta
