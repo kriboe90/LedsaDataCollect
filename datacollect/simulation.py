@@ -48,7 +48,7 @@ class SimData:
         for file in files_list:
             file_df = pd.read_csv(file, skiprows=4)
             channel = int(file.split('channel_')[1].split('_')[0])
-            line = file.split('array_')[1].split('.')[0]
+            line = int(file.split('array_')[1].split('.')[0])
             n_layers = len(file_df.columns)
             time = self.image_info_df['Experiment_Time[s]'].astype(int)
             file_df = file_df.merge(time, left_index=True, right_index=True)
