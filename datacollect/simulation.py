@@ -3,9 +3,15 @@ import glob
 import pandas as pd
 
 class SimData:
-    def __init__(self, path_simulation: str, all=True):
+    def __init__(self, path_simulation: str, all=True, average_images=False):
         self.path_simulation = path_simulation
-        self.image_info_df = pd.read_csv(os.path.join(self.path_simulation, 'analysis/image_infos_analysis.csv'))
+        if average_images == True:
+            image_infos_file = 'analysis/image_infos_analysis_avg.csv'
+        else:
+            image_infos_file = 'analysis/image_infos_analysis.csv'
+
+        self.image_info_df = pd.read_csv(os.path.join(self.path_simulation, image_infos_file))
+
         if all == True:
             self.read_all()
         else:

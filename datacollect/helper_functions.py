@@ -8,6 +8,6 @@ def get_height_from_layer(low: float, high: float, layer: float, nlayers: int) -
     return -1*(layer/nlayers*(high-low)-high)
 
 
-def get_widman_rel(l: int) -> float:
+def get_widman_extco(l: int) -> float:
     """Get Widman relation for a specific wavelength"""
-    return 4.8081*l**-1.088
+    return 4.8081*l**-1.0088

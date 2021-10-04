@@ -22,7 +22,7 @@ class ImageData:
         pixel_positions = led_info_df.loc[led_info_df.index == led_id][[' pixel position x', ' pixel position y' ]].values[0]
         return pixel_positions
 
-    def read_file(self, filename: str, channel: int, colordepth=14):
+    def read_file(self, filename: str, channel: int, colordepth: int):
         """
         Returns a 2D array of channel values depending on the colordepth.
         14bit is default range for RAW. Bayer array is a 2D array where
@@ -43,7 +43,7 @@ class ImageData:
             channel_array = np.where((filter_array == 1) | (filter_array == 3), channel_array, 0)
         return channel_array
 
-    def get_led_array(self, led_id: int, timestep: int, channel: int, radius: int):
+    def get_led_array(self, led_id: int, timestep: int, channel: int, radius: int, colordepth=14):
         """
         Return a cropped 2D array with shape (2*radius, 2*radius)
         of channel values from an image according to a certain timestep.
@@ -51,7 +51,7 @@ class ImageData:
         imagename = self.get_image_name_from_timestep(timestep)
         path_image = os.path.join(self.path_images, imagename)
         pixel_position = self.get_pixel_cordinates_of_LED(led_id)
-        channel_array = self.read_file(path_image, channel, radius)
+        channel_array = self.read_file(path_image, channel, colordepth)
         x = pixel_position[0]
         y = pixel_position[1]
         channel_array_cropped = channel_array[x - radius:x + radius, y - radius:y + radius]
