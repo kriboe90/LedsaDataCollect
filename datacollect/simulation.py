@@ -3,17 +3,19 @@ import glob
 import pandas as pd
 
 class SimData:
-    def __init__(self, path_simulation: str, all=True, average_images=False):
+    def __init__(self, path_simulation: str, all=True, average_images=False, remove_dublicates=False):
         self.path_simulation = path_simulation
         if average_images == True:
             image_infos_file = 'analysis/image_infos_analysis_avg.csv'
         else:
             image_infos_file = 'analysis/image_infos_analysis.csv'
-
+        self.average_images = average_images
         self.image_info_df = pd.read_csv(os.path.join(self.path_simulation, image_infos_file))
 
         if all == True:
             self.read_all()
+        if remove_dublicates == True:
+            self.remove_dublicate_heights()
         else:
             self.ch0_ledparams = None
             self.ch1_ledparams = None
@@ -36,7 +38,10 @@ class SimData:
 
     def _get_ledparams_df_from_path(self, channel: int) -> pd.DataFrame:
         """Read binary hdf table and set experimental time as index"""
-        file = os.path.join(self.path_simulation, 'analysis', f'channel{channel}', 'all_parameters.h5')
+        if self.average_images == True:
+            file = os.path.join(self.path_simulation, 'analysis', f'channel{channel}', 'all_parameters_avg.h5')
+        else:
+            file = os.path.join(self.path_simulation, 'analysis', f'channel{channel}', 'all_parameters.h5')
         table = pd.read_hdf(file, 'table')
         time = self.image_info_df['Experiment_Time[s]'].astype(int)
         table = table.merge(time, left_on='img_id', right_index=True)
@@ -73,6 +78,11 @@ class SimData:
         self.ch2_ledparams_df = self._get_ledparams_df_from_path(2)
         self._get_extco_df_from_path()
 
+    def remove_dublicate_heights(self):
+        self.ch0_ledparams_df = self.ch0_ledparams_df.groupby(['Experiment_Time[s]', 'height']).last()
+        self.ch1_ledparams_df = self.ch1_ledparams_df.groupby(['Experiment_Time[s]', 'height']).last()
+        self.ch2_ledparams_df = self.ch2_ledparams_df.groupby(['Experiment_Time[s]', 'height']).last()
+
     def get_extco_at_timestep(self, channel: int, timestep: int, yaxis='layer', window=1, smooth='ma') -> pd.DataFrame:
         """
         Get a Dataframe containing extinction coefficients at timestep.
@@ -87,7 +97,6 @@ class SimData:
         ma_ch_extco_df = ma_ch_extco_df.loc[timestep, :]
         ma_ch_extco_df = ma_ch_extco_df.reset_index().pivot(columns='Line',index='Layer')
         ma_ch_extco_df.columns = ma_ch_extco_df.columns.droplevel()
-        # print(ma_ch_extco_df)
         ma_ch_extco_df.index = range(ma_ch_extco_df.shape[0])
         if yaxis == 'layer':
             ma_ch_extco_df.index.names = ["Layer"]
