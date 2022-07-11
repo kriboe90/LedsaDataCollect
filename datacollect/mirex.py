@@ -17,9 +17,9 @@ class MirexData:
         sigma_1 = lambda b : np.log(10**(b/10))
         sigma_2 = lambda b : 5*np.log10(1/b*10)/(np.log10(np.e)*10)
         if self.smooth == 'median':
-            self.mirex_data_df = self.mirex_input_df.iloc[::-1].rolling(window=self.window, closed='left').median().iloc[::-1]
+            self.mirex_data_df = self.mirex_input_df.iloc[::-1].rolling(window=self.window, closed='right').median().iloc[::-1]
         else:
-            self.mirex_data_df = self.mirex_input_df.iloc[::-1].rolling(window=self.window, closed='left').mean().iloc[::-1]
+            self.mirex_data_df = self.mirex_input_df.iloc[::-1].rolling(window=self.window, closed='right').mean().iloc[::-1]
         self.real_time = self.mirex_data_df['# Time : ;  Sample']
         self.mirex_data_df.index = self.real_time.to_numpy()
         self.mirex_1 = self.mirex_data_df['MIREX    '].apply(sigma_1) # h = 3.30 m
@@ -36,12 +36,16 @@ class MirexData:
         self.window = window
         self.smooth = smooth
         self.__read_data()
-    def set_timeshift(self, timedelta:int):
+    def set_timeshift(self, timedelta:int, correct_timeshift_error=True):
         """
         Set timeshift in secnonds on index of dataframe
         """
+        if correct_timeshift_error ==  True\
+                :
+            timedelta += self.window
         self.mirex_1.index += timedelta
         self.mirex_2.index += timedelta
         self.mirex_3.index += timedelta
-#         self.mass_loss_rate.index += timedelta
-#         self.temperature.index += timedelta
+        self.mass_loss_rate.index += timedelta
+        self.total_mass.index += timedelta
+        self.temperature.index += timedelta

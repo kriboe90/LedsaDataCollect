@@ -69,13 +69,18 @@ class SimData:
             extco_list.append(file_df)
         self.all_extco_df = pd.concat(extco_list, axis=1)
         self.all_extco_df.sort_index(ascending=True, axis=1, inplace=True)
+        self.all_extco_df = self.all_extco_df[~self.all_extco_df.index.duplicated(keep='first')] # Remove dublicate timesteps
         self.n_layers = n_layers
 
-    def read_all(self):
-        """Read led parameters and extionciton coefficients for all color channels from the simulation path"""
+    def read_led_params(self):
+        """Read led parameters for all color channels from the simulation path"""
         self.ch0_ledparams_df = self._get_ledparams_df_from_path(0)
         self.ch1_ledparams_df = self._get_ledparams_df_from_path(1)
         self.ch2_ledparams_df = self._get_ledparams_df_from_path(2)
+
+    def read_all(self):
+        """Read led parameters and extionciton coefficients for all color channels from the simulation path"""
+        self.read_led_params()
         self._get_extco_df_from_path()
 
     def remove_dublicate_heights(self):
@@ -139,7 +144,7 @@ class SimData:
 
     def get_ledparams_at_line(self, channel: int, line: int, param='sum_col_val', yaxis='led_id', window=1, n_ref=10) -> pd.DataFrame:
         """
-        Get a Dataframe containing extinction coefficients at line.
+        Get a Dataframe containing intensities at line.
         Index = experimental time, Columns = Layer
         Smooth over time (window) by moving average (ma) or meadian (meadian).
         The parameters are normalized to the average of the first n_ref images.
@@ -163,6 +168,31 @@ class SimData:
         rel_i = rel_i.reset_index().pivot(columns=index,index='Experiment_Time[s]')
         rel_i.columns  = rel_i.columns.droplevel()
         # rel_i_ma = rel_i.iloc[::-1].rolling(window=window, closed='left').mean().iloc[::-1]
+        rel_i_ma = rel_i.rolling(window=window, closed='right').mean().shift(-int(window/2)+1)
+
+        return rel_i_ma
+
+    def get_ledparams_at_led_id(self, channel: int, led_id: int, param='sum_col_val', window=1, n_ref=10) -> pd.DataFrame:
+        """
+        Get a Dataframe containing intensities at led_id over time.
+        Index = experimental time, Columns = Layer
+        Smooth over time (window) by moving average (ma) or meadian (meadian).
+        The parameters are normalized to the average of the first n_ref images.
+        If n_ref is set to False the absolute values are returned.
+        """
+        if channel == 0:
+            led_params = self.ch0_ledparams_df
+        elif channel == 1:
+            led_params = self.ch1_ledparams_df
+        elif channel == 2:
+            led_params = self.ch2_ledparams_df
+        led_params = led_params.reset_index().set_index(['Experiment_Time[s]'])
+        ii = led_params[led_params['led_id'] == led_id][[param]]
+        if n_ref == False:
+            rel_i = ii
+        else:
+            i0 = ii.iloc[0:n_ref].mean()
+            rel_i = ii/i0
         rel_i_ma = rel_i.rolling(window=window, closed='right').mean().shift(-int(window/2)+1)
 
         return rel_i_ma
